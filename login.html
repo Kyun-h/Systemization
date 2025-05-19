@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>로그인 | 학교 식당 예약 시스템</title>
+  <style>
+    :root {
+      --bg: #f9f9f9;
+      --card-bg: #fff;
+      --text: #333;
+      --accent: #4CAF50;
+      --border: #ccc;
+    }
+    body {
+      font-family: 'Segoe UI', Tahoma, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+    }
+    .container {
+      width: 100%;
+      max-width: 360px;
+      padding: 20px;
+      background: var(--card-bg);
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      text-align: center;
+    }
+    h1 {
+      margin-bottom: 24px;
+      font-size: 24px;
+    }
+    label {
+      display: block;
+      text-align: left;
+      margin-bottom: 4px;
+      font-weight: bold;
+    }
+    input {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 16px;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      font-size: 16px;
+    }
+    button {
+      width: 100%;
+      padding: 10px;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    .link {
+      margin-top: 12px;
+      font-size: 14px;
+    }
+    .link a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>로그인</nobr></h1>
+    <form id="loginForm">
+      <label for="email">이메일</label>
+      <input type="email" id="email" name="email" placeholder="you@example.com" required />
+
+      <label for="password">비밀번호</label>
+      <input type="password" id="password" name="password" placeholder="********" required />
+
+      <button type="submit">로그인</button>
+    </form>
+    <div class="link">
+      계정이 없으신가요? <a href="#" id="signupLink">회원가입</a>
+    </div>
+  </div>
+
+  <script>
+    // 향후 Firebase 인증 로직 추가 예정
+    document.getElementById('loginForm').addEventListener('submit', e => {
+      e.preventDefault();
+      // TODO: Firebase Auth 처리
+      console.log('로그인 요청:', {
+        email: e.target.email.value,
+        password: e.target.password.value
+      });
+    });
+    document.getElementById('signupLink').addEventListener('click', e => {
+      e.preventDefault();
+      // TODO: 회원가입 페이지로 이동
+      alert('회원가입 페이지로 이동');
+    });
+  </script>
+</body>
+</html>

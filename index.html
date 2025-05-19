@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>학교 식당 예약 시스템</title>
+  <style>
+    /* Variables */
+    :root {
+      --bg: #f9f9f9;
+      --card-bg: #ffffff;
+      --text: #333333;
+      --accent: #4caf50;
+      --border: #dddddd;
+      --radius: 8px;
+      --shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      --gap: 16px;
+      --transition: 0.3s;
+    }
+    /* Global reset */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: 'Segoe UI', Tahoma, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+    }
+    a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+    /* Layout */
+    .layout {
+      display: flex;
+      gap: var(--gap);
+      padding: var(--gap);
+      align-items: start;
+    }
+    /* Sidebar / Calendar */
+    .sidebar {
+      flex: 0 0 220px;
+    }
+    .calendar {
+      background: var(--card-bg);
+      padding: var(--gap);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+    .cal-header {
+      text-align: center;
+      font-weight: bold;
+      margin-bottom: var(--gap);
+      font-size: 1rem;
+    }
+    .calendar table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    .calendar th,
+    .calendar td {
+      width: 14.285%;
+      text-align: center;
+      padding: 4px 0;
+      font-size: 0.875rem;
+      transition: background var(--transition);
+    }
+    .calendar th {
+      color: var(--accent);
+    }
+    .calendar .today {
+      background: var(--accent);
+      color: #ffffff;
+      border-radius: 50%;
+    }
+    /* Main content */
+    .content {
+      flex: 1;
+    }
+    #authLink {
+      position: fixed;
+      top: var(--gap);
+      right: var(--gap);
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 4px 8px;
+      font-size: 0.875rem;
+      transition: background var(--transition);
+    }
+    #authLink:hover {
+      background: var(--accent);
+      color: #fff;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: var(--gap);
+      font-size: 1.5rem;
+    }
+    .container {
+      max-width: 400px;
+      margin: 0 auto;
+      background: var(--card-bg);
+      padding: var(--gap);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      transition: transform var(--transition);
+    }
+    .container:hover {
+      transform: translateY(-4px);
+    }
+    label {
+      display: block;
+      margin-top: var(--gap);
+      font-weight: bold;
+      font-size: 0.9rem;
+    }
+    input[type="date"],
+    select,
+    button {
+      width: 100%;
+      padding: 10px;
+      margin-top: 8px;
+      font-size: 1rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: #fafafa;
+      color: var(--text);
+      transition: border-color var(--transition);
+    }
+    select:focus,
+    input[type="date"]:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+    button {
+      cursor: pointer;
+      background: var(--accent);
+      color: #ffffff;
+      border: none;
+      margin-top: var(--gap);
+      font-weight: bold;
+    }
+    button:hover {
+      opacity: 0.9;
+    }
+    button:disabled {
+      background: #cccccc;
+      cursor: not-allowed;
+    }
+    .info {
+      margin-top: 8px;
+      font-size: 0.85rem;
+      color: #666666;
+      text-align: left;
+    }
+    #qrcode {
+      margin-top: var(--gap);
+      display: flex;
+      justify-content: center;
+    }
+    /* Responsive mobile styling */
+    @media (max-width: 768px) {
+      .layout {
+        flex-direction: column;
+        padding: 12px;
+      }
+      .sidebar {
+        width: 100%;
+      }
+      .calendar {
+        margin-bottom: var(--gap);
+      }
+      h1 {
+        font-size: 1.25rem;
+      }
+      .container {
+        padding: 12px;
+        box-shadow: none;
+      }
+      input[type="date"],
+      select,
+      button {
+        font-size: 0.95rem;
+      }
+      .cal-header {
+        font-size: 0.95rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="calendar" id="calendar"></div>
+    </aside>
+    <main class="content">
+      <a id="authLink" href="login.html">로그인/회원가입</a>
+      <h1>학교 식당 예약 시스템</h1>
+      <div class="container">
+        <label for="date">날짜 (오늘만 선택 가능):</label>
+        <input type="date" id="date" disabled />
+        <p class="info">
+          ※ 예약 시간 30분 안에 오지 않으면 예약이 취소됩니다.
+        </p>
+        <label for="timeslot">시간대 선택:</label>
+        <select id="timeslot">
+          <option value="11:00~11:30">11:00~11:30</option>
+          <option value="11:30~12:00">11:30~12:00</option>
+          <option value="12:00~12:30">12:00~12:30</option>
+          <option value="12:30~13:00">12:30~13:00</option>
+        </select>
+        <div class="info" id="menuStock"></div>
+        <label for="menu">메뉴 선택:</label>
+        <select id="menu">
+          <option value="비빔밥">비빔밥</option>
+          <option value="된장찌개">된장찌개</option>
+          <option value="카레라이스">카레라이스</option>
+        </select>
+        <button id="payBtn">테스트 결제 및 예약</button>
+        <div id="qrcode"></div>
+      </div>
+    </main>
+  </div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script src="https://js.tosspayments.com/v1"></script>
+  <script>
+    // 달력 렌더링
+    function renderCalendar() {
+      const calendar = document.getElementById('calendar');
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = now.getMonth();
+      const todayDate = now.getDate();
+      const firstDay = new Date(year, month, 1).getDay();
+      const lastDate = new Date(year, month + 1, 0).getDate();
+      const days = ['일','월','화','수','목','금','토'];
+      let html = `<div class="cal-header">${year}년 ${month + 1}월</div><table><thead><tr>`;
+      days.forEach(d => (html += `<th>${d}</th>`));
+      html += '</tr></thead><tbody><tr>';
+      for (let i = 0; i < firstDay; i++) html += '<td></td>';
+      for (let date = 1; date <= lastDate; date++) {
+        const dow = (firstDay + date - 1) % 7;
+        html += `<td class="${date === todayDate ? 'today' : ''}">${date}</td>`;
+        if (dow === 6 && date !== lastDate) html += '</tr><tr>';
+      }
+      html += '</tr></tbody></table>';
+      calendar.innerHTML = html;
+    }
+    renderCalendar();
+    // 예약 로직
+    const TODAY = new Date().toISOString().split('T')[0];
+    document.getElementById('date').value = TODAY;
+    const initialStock = {
+      '11:00~11:30': { '비빔밥': 20, '된장찌개': 20, '카레라이스': 20 },
+      '11:30~12:00': { '비빔밥': 20, '된장찌개': 20, '카레라이스': 20 },
+      '12:00~12:30': { '비빔밥': 20, '된장찌개': 20, '카레라이스': 20 },
+      '12:30~13:00': { '비빔밥': 20, '된장찌개': 20, '카레라이스': 20 }
+    };
+    const timeslot = document.getElementById('timeslot');
+    const menu = document.getElementById('menu');
+    const stockDiv = document.getElementById('menuStock');
+    function keyOf(slot, item) {
+      return `${TODAY}__${slot}__${item}`;
+    }
+    function reservedCount(key) {
+      return Number(localStorage.getItem(key) || 0);
+    }
+    function renderStock() {
+      const slot = timeslot.value;
+      stockDiv.innerHTML = Object.entries(initialStock[slot])
+        .map(([item, cnt]) => {
+          const left = cnt - reservedCount(keyOf(slot, item));
+          return `<strong>${item}</strong>: ${left}개 남음`;
+        })
+        .join('<br>');
+    }
+    timeslot.addEventListener('change', renderStock);
+    menu.addEventListener('change', renderStock);
+    renderStock();
+    // 결제 및 자동 예약
+    const toss = TossPayments('test_ck_GePWvyJnrKKGbgeMkzx1rgLzN97E');
+    document.getElementById('payBtn').addEventListener('click', () => {
+      toss.requestPayment('카드', {
+        amount: 1000,
+        orderId: 'order_' + Date.now(),
+        orderName: `${timeslot.value} ${menu.value} 예약`,
+        customerName: '홍길동',
+        successUrl: location.href + '?payment=success',
+        failUrl: location.href + '?payment=fail'
+      });
+    });
+    // 자동 예약 처리
+    const params = new URLSearchParams(location.search);
+    if (params.get('payment') === 'success') {
+      alert('테스트 결제가 성공했습니다! 자동 예약 및 QR 발급 중...');
+      const slotVal = timeslot.value;
+      const menuVal = menu.value;
+      const k = keyOf(slotVal, menuVal);
+      localStorage.setItem(k, reservedCount(k) + 1);
+      document.getElementById('qrcode').innerHTML = '';
+      new QRCode(document.getElementById('qrcode'), {
+        text: `${TODAY}|${slotVal}|${menuVal}`,
+        width: 200,
+        height: 200
+      });
+      renderStock();
+      history.replaceState(null, '', location.pathname);
+    }
+  </script>
+</body>
+</html>

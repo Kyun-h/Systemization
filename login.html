@@ -22,7 +22,7 @@
       height: 100vh;
       margin: 0;
     }
-    .container {
+    .container {  
       width: 100%;
       max-width: 360px;
       padding: 20px;
@@ -82,7 +82,7 @@
       <button type="submit">로그인</button>
     </form>
     <div class="link">
-      계정이 없으신가요? <a href="#" id="signupLink">회원가입</a>
+      계정이 없으신가요? <a href="signup.html" id="signupLink">회원가입</a>
     </div>
   </div>
 
@@ -95,11 +95,6 @@
         email: e.target.email.value,
         password: e.target.password.value
       });
-    });
-    document.getElementById('signupLink').addEventListener('click', e => {
-      e.preventDefault();
-      // TODO: 회원가입 페이지로 이동
-      alert('회원가입 페이지로 이동');
     });
   </script>
 </body>

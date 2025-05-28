@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>식권예약 | 식당 예약 시스템</title>
+  <style>
+    :root {
+      --bg: #fff5f5;
+      --card-bg: #ffffff;
+      --text: #2d0000;
+      --accent: #d32f2f;
+      --accent-hover: #b71c1c;
+      --border: #f5c6cb;
+    }
+
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', Tahoma, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    header.navbar {
+      width: 100%;
+      background-color: var(--accent);
+      color: white;
+      padding: 12px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-sizing: border-box;
+    }
+
+    .nav-title {
+      font-size: 20px;
+      font-weight: bold;
+    }
+
+    .nav-buttons {
+      display: flex;
+      gap: 10px;
+    }
+
+    .nav-buttons button {
+      background-color: white;
+      color: var(--accent);
+      border: none;
+      padding: 8px 14px;
+      border-radius: 5px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .nav-buttons button:hover {
+      background-color: var(--border);
+    }
+
+    h1 {
+      font-size: 24px;
+      margin: 40px 0 20px;
+      text-align: center;
+    }
+
+    .layout {
+      display: flex;
+      gap: 20px;
+      width: 100%;
+      max-width: 900px;
+      padding: 20px;
+      box-sizing: border-box;
+    }
+
+    .sidebar {
+      flex: 0 0 240px;
+    }
+
+    .calendar {
+      background-color: var(--card-bg);
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .cal-header {
+      text-align: center;
+      font-weight: bold;
+      margin-bottom: 16px;
+      font-size: 16px;
+      color: var(--accent);
+    }
+
+    .calendar table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .calendar th,
+    .calendar td {
+      width: 14.285%;
+      text-align: center;
+      padding: 6px 0;
+      font-size: 0.875rem;
+    }
+
+    .calendar th {
+      color: var(--accent);
+    }
+
+    .calendar .today {
+      background: var(--accent);
+      color: #fff;
+      border-radius: 50%;
+    }
+
+    .content {
+      flex: 1;
+    }
+
+    .container {
+      background-color: var(--card-bg);
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      max-width: 100%;
+    }
+
+    label {
+      display: block;
+      text-align: left;
+      margin-bottom: 6px;
+      font-weight: bold;
+      margin-top: 20px;
+    }
+
+    input[type="date"],
+    select,
+    button {
+      width: 100%;
+      padding: 10px;
+      margin-top: 6px;
+      font-size: 15px;
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      box-sizing: border-box;
+      background: #fafafa;
+    }
+
+    input:focus,
+    select:focus {
+      border-color: var(--accent);
+      outline: none;
+    }
+
+    button {
+      background-color: var(--accent);
+      color: white;
+      border: none;
+      border-radius: 5px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 24px;
+    }
+
+    button:hover {
+      background-color: var(--accent-hover);
+    }
+
+    .info {
+      font-size: 14px;
+      color: #666;
+      margin-top: 8px;
+    }
+
+    #qrcode {
+      margin-top: 20px;
+      display: flex;
+      justify-content: center;
+    }
+
+    @media (max-width: 768px) {
+      .layout {
+        flex-direction: column;
+        padding: 12px;
+      }
+      .sidebar {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <header class="navbar">
+    <div class="nav-title">크누페이 식권 예약</div>
+    <div class="nav-buttons">
+      <button onclick="location.href='index.html'">메인으로</button>
+      <button id="logout-btn">로그아웃</button>
+    </div>
+  </header>
+
+  <h1>식권 예약하기</h1>
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="calendar" id="calendar"></div>
+    </aside>
+    <main class="content">
+      <div class="container">
+        <label for="date">날짜 (오늘만 선택 가능):</label>
+        <input type="date" id="date" disabled />
+
+        <p class="info">
+          ※ 예약 시간 30분 안에 오지 않으면 예약이 취소됩니다.
+        </p>
+
+        <label for="timeslot">시간대 선택:</label>
+        <select id="timeslot">
+          <option value="11:00~11:30">11:00~11:30</option>
+          <option value="11:30~12:00">11:30~12:00</option>
+          <option value="12:00~12:30">12:00~12:30</option>
+          <option value="12:30~13:00">12:30~13:00</option>
+          <option value="13:00~13:30">13:00~13:30</option>
+        </select>
+
+        <div class="info" id="menuStock"></div>
+
+        <label for="menu">메뉴 선택:</label>
+        <select id="menu">
+          <option value="" disabled selected>메뉴를 선택하세요</option>
+          <option value="제육볶음" data-price="4500">제육볶음 - 4,500원</option>
+          <option value="된장찌개" data-price="4000">된장찌개 - 4,000원</option>
+          <option value="김치찌개" data-price="4200">김치찌개 - 4,200원</option>
+        </select>
+
+        <button id="payBtn">테스트 결제 및 예약</button>
+        <div id="qrcode"></div>
+      </div>
+    </main>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script src="https://js.tosspayments.com/v1"></script>
+  <script type="module">
+    import { mockAuth, mockReservation, mockMenu } from './mockApi.js';
+    // 로그인 상태 확인
+    if (!mockAuth.isLoggedIn()) {
+      alert("로그인이 필요합니다.");
+      window.location.href = 'login.html';
+    }
+
+    // 달력 렌더링
+    function renderCalendar() {
+      const calendar = document.getElementById('calendar');
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = now.getMonth();
+      const todayDate = now.getDate();
+      const firstDay = new Date(year, month, 1).getDay();
+      const lastDate = new Date(year, month + 1, 0).getDate();
+      const days = ['일','월','화','수','목','금','토'];
+      let html = `<div class="cal-header">${year}년 ${month + 1}월</div><table><thead><tr>`;
+      days.forEach(d => (html += `<th>${d}</th>`));
+      html += '</tr></thead><tbody><tr>';
+      for (let i = 0; i < firstDay; i++) html += '<td></td>';
+      for (let date = 1; date <= lastDate; date++) {
+        const dow = (firstDay + date - 1) % 7;
+        html += `<td class="${date === todayDate ? 'today' : ''}">${date}</td>`;
+        if (dow === 6 && date !== lastDate) html += '</tr><tr>';
+      }
+      html += '</tr></tbody></table>';
+      calendar.innerHTML = html;
+    }
+    renderCalendar();
+
+    // 예약 로직
+    const TODAY = new Date().toISOString().split('T')[0];
+    document.getElementById('date').value = TODAY;
+    
+    const timeslot = document.getElementById('timeslot');
+    const menu = document.getElementById('menu');
+    const stockDiv = document.getElementById('menuStock');
+    
+    function renderStock() {
+      const slot = timeslot.value;
+      const stockList = mockMenu.getTodayStock(TODAY, slot);
+      stockDiv.innerHTML = stockList.map(item => `<strong>${item.menu}</strong>: ${item.left}개 남음`).join('<br>');
+    }
+
+    timeslot.addEventListener('change', renderStock);
+    menu.addEventListener('change', renderStock);
+    renderStock();
+
+    // 결제 및 자동 예약
+    const toss = TossPayments('test_ck_GePWvyJnrKKGbgeMkzx1rgLzN97E');
+    document.getElementById('payBtn').addEventListener('click', () => {
+      
+      // 결제 버튼 클릭 시: 선택한 값들을 sessionStorage에 저장
+      sessionStorage.setItem('reserveSlot', timeslot.value);
+      sessionStorage.setItem('reserveMenu', menu.value);
+
+      toss.requestPayment('카드', {
+        amount: 10,
+        orderId: 'order_' + Date.now(),
+        orderName: `${timeslot.value} ${menu.value} 예약`,
+        customerName: '홍길동',
+        successUrl: location.href + '?payment=success',
+        failUrl: location.href + '?payment=fail'
+      });
+    });
+
+    // 자동 예약 처리
+    const params = new URLSearchParams(location.search);
+    if (params.get('payment') === 'success') {
+      alert('테스트 결제가 성공했습니다! 자동 예약 및 QR 발급 중...');
+      const slotVal = sessionStorage.getItem('reserveSlot');
+      const menuVal = sessionStorage.getItem('reserveMenu');
+      const qrText = `${TODAY}|${slotVal}|${menuVal}`;
+      mockReservation.save({
+        date: TODAY,
+        time: slotVal,
+        menu: menuVal,
+        qrText: qrText
+      });
+
+      document.getElementById('qrcode').innerHTML = '';
+      new QRCode(document.getElementById('qrcode'), {
+        text: qrText,
+        width: 200,
+        height: 200
+      });
+      renderStock();
+      history.replaceState(null, '', location.pathname);
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const logoutBtn = document.getElementById('logout-btn');
+      logoutBtn.addEventListener('click', () => {
+        mockAuth.logout();
+        alert("로그아웃되었습니다.");
+        location.href = 'login.html';
+      });
+    });
+  </script>
+</body>
+</html>

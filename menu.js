@@ -6,17 +6,27 @@ document.addEventListener('DOMContentLoaded', () => {
     {
       name: "김치찌개",
       price: 4500,
-      image: "https://cdn.pixabay.com/photo/2022/01/23/10/31/kimchi-6960399_1280.jpg"
+      image: "imgs/kim.jpg"
     },
     {
       name: "제육볶음",
       price: 5000,
-      image: "https://cdn.pixabay.com/photo/2022/05/24/11/59/korean-food-7219733_1280.jpg"
+      image: "imgs/jj.jpeg"
     },
     {
       name: "돈까스",
       price: 5500,
       image: "imgs/don.jpeg"
+    },
+    {
+      name: "육회비빔밥",
+      price: 5500,
+      image: "imgs/yuk.jpeg"
+    },
+    {
+      name: "돼지국밥",
+      price: 5500,
+      image: "imgs/pork.jpg"
     }
   ];
 

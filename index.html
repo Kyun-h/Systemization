@@ -5,6 +5,19 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>식당 예약 시스템</title>
   <link rel="stylesheet" href="style.css" />
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyCRC4GkhNoz4MH3Mbxb5a38puGNu2Fox4E",
+      authDomain: "systemization-dc342.firebaseapp.com",
+      projectId: "systemization-dc342",
+      appId: "1:8105541836:web:230c5c7867f3bcb62cc269"
+    };
+    firebase.initializeApp(firebaseConfig);
+  </script>
 </head>
 <body>
   <header class="navbar">
@@ -24,48 +37,44 @@
       <div id="time-slot-list" class="slot-list"></div>
     </div>
 
-    <button id="reserve-button"">예약하러 가기</button>
+    <button id="reserve-button">예약하러 가기</button>
   </div>
 
-  <script type="module">
-  import { mockAuth } from './mockApi.js';
+  <!-- ✅ Firebase 로그인 상태에 따른 버튼 처리 -->
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const loginBtn = document.getElementById('login-btn');
+      const mypageBtn = document.getElementById('mypage-btn');
 
-  document.addEventListener('DOMContentLoaded', () => {
-    const loginBtn = document.getElementById('login-btn');
-    const mypageBtn = document.getElementById('mypage-btn');
+      firebase.auth().onAuthStateChanged(user => {
+        if (user) {
+          // 로그인 상태일 때
+          loginBtn.textContent = '내정보';
+          loginBtn.onclick = () => location.href = 'mypage.html';
 
-    function updateLoginButton() {
-      if (mockAuth.isLoggedIn()) {
-        loginBtn.textContent = '로그아웃';
-        loginBtn.onclick = () => {
-          mockAuth.logout();
-          alert('로그아웃되었습니다.');
-          location.reload();
-        };
-      } else {
-        loginBtn.textContent = '로그인';
-        loginBtn.onclick = () => {
-          location.href = 'login.html';
-        };
-      }
-    }
-
-    function updateMypageButton() {
-      mypageBtn.onclick = () => {
-        if (!mockAuth.isLoggedIn()) {
-          alert('로그인이 필요합니다.');
-          location.href = 'login.html';
+          mypageBtn.textContent = '로그아웃';
+          mypageBtn.onclick = () => {
+            firebase.auth().signOut().then(() => {
+              alert("로그아웃되었습니다.");
+              location.reload();
+            });
+          };
         } else {
-          location.href = 'mypage.html';
+          // 비로그인 상태일 때
+          loginBtn.textContent = '로그인';
+          loginBtn.onclick = () => location.href = 'login.html';
+
+          mypageBtn.textContent = '예약내역';
+          mypageBtn.onclick = () => {
+            alert("로그인이 필요합니다.");
+            location.href = 'login.html';
+          };
         }
-      };
-    }
+      });
+    });
+  </script>
 
-    updateLoginButton();
-    updateMypageButton();
-  });
-</script>
-
-<script type="module" src="./menu.js"></script>
+  <!-- 메뉴 렌더링 -->
+  <script type="module" src="./menu.js"></script>
 </body>
 </html>

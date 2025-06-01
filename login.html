@@ -4,6 +4,19 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>로그인 | 식당 예약 시스템</title>
+
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyCRC4GkhNoz4MH3Mbxb5a38puGNu2Fox4E",
+      authDomain: "systemization-dc342.firebaseapp.com",
+      projectId: "systemization-dc342",
+      appId: "1:8105541836:web:230c5c7867f3bcb62cc269"
+    };
+    firebase.initializeApp(firebaseConfig);
+  </script>
+
   <style>
     :root {
       --bg: #fff5f5;
@@ -169,22 +182,18 @@
     </div>
   </div>
 
-  <script type="module">
-    import { mockAuth } from './mockApi.js';
-
-    const form = document.getElementById('loginForm');
-    form.addEventListener('submit', async (e) => {
+  <script>
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
       e.preventDefault();
+      const email = e.target.email.value;
+      const password = e.target.password.value;
 
-      const email = form.email.value;
-      const password = form.password.value;
-      const result = mockAuth.login(email, password);
-
-      if (result.success) {
+      try {
+        await firebase.auth().signInWithEmailAndPassword(email, password);
         alert("로그인 성공");
-        window.location.href = 'index.html';
-      } else {
-        alert("잘못된 이메일 또는 비밀번호입니다.");
+        location.href = 'index.html';
+      } catch (error) {
+        alert("로그인 실패: " + error.message);
       }
     });
   </script>

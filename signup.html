@@ -1,9 +1,22 @@
-<!DOCTYPE html>
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>회원가입 | 식당 예약 시스템</title>
+
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyCRC4GkhNoz4MH3Mbxb5a38puGNu2Fox4E",
+      authDomain: "systemization-dc342.firebaseapp.com",
+      projectId: "systemization-dc342",
+      appId: "1:8105541836:web:230c5c7867f3bcb62cc269"
+    };
+    firebase.initializeApp(firebaseConfig);
+  </script>
+
   <style>
     :root {
       --bg: #fff5f5;
@@ -176,7 +189,7 @@
   </div>
 
   <script>
-    document.getElementById('signupForm').addEventListener('submit', e => {
+    document.getElementById('signupForm').addEventListener('submit', async (e) => {
       e.preventDefault();
       const name = e.target.name.value;
       const email = e.target.email.value;
@@ -188,11 +201,13 @@
         return;
       }
 
-      // TODO: 회원가입 처리
-      console.log('회원가입 요청:', { name, email, password });
-
-      alert('회원가입이 완료되었습니다!');
-      location.href = 'login.html';
+      try {
+        await firebase.auth().createUserWithEmailAndPassword(email, password);
+        alert("회원가입이 완료되었습니다!");
+        location.href = 'login.html';
+      } catch (error) {
+        alert("회원가입 실패: " + error.message);
+      }
     });
   </script>
 </body>

@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>예약내역 | 식당 예약 시스템</title>
+  <style>
+    :root {
+      --bg: #fff5f5; --card-bg: #ffffff; --text: #2d0000; --accent: #d32f2f; --accent-hover: #b71c1c; --border: #f5c6cb;
+    }
+    body {
+      font-family: 'Arial', sans-serif; background-color: var(--bg); margin: 0; padding: 0; color: var(--text); display: flex; flex-direction: column; align-items: center;
+    }
+    .navbar {
+      background-color: var(--accent); color: white; padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; width: 100%; box-sizing: border-box;
+    }
+    .nav-title { font-size: 20px; font-weight: bold;}
+    .nav-buttons { display: flex; gap: 10px; margin-top: 10px;}
+    .nav-buttons button { background-color: white; color: var(--accent); border: none; padding: 8px 14px; border-radius: 5px; font-weight: bold; cursor: pointer;}
+    .nav-buttons button:hover { background-color: var(--border);}
+    .container {
+      width: 100%; max-width: 400px; margin: 60px auto; background-color: var(--card-bg); padding: 30px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); box-sizing: border-box; text-align: center;
+    }
+    h1 { font-size: 24px; margin-bottom: 24px;}
+    #reservation-info p { margin: 8px 0; font-size: 16px;}
+    #qr-code-wrapper { display: flex; justify-content: center; margin: 20px 0 10px;}
+    #qr-code-view { width: fit-content;}
+    .nav-button {
+      background-color: white; color: var(--accent); border: none; padding: 10px 16px; border-radius: 5px; font-weight: bold; cursor: pointer; margin-top: 20px;
+    }
+    .nav-button:hover { background-color: var(--border);}
+    .nav-button.danger { background-color: #dc3545; color: white;}
+    .nav-button.danger:hover { background-color: #c82333;}
+    @media (max-width: 768px) {
+      .navbar { flex-direction: column; align-items: flex-start;}
+      .nav-buttons { margin-top: 10px;}
+      .container { padding: 20px; margin: 40px 16px;}
+    }
+  </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyCRC4GkhNoz4MH3Mbxb5a38puGNu2Fox4E",
+      authDomain: "systemization-dc342.firebaseapp.com",
+      projectId: "systemization-dc342",
+      appId: "1:8105541836:web:230c5c7867f3bcb62cc269"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const reservationInfo = document.getElementById('reservation-info');
+      const qrCodeView = document.getElementById('qr-code-view');
+      const cancelBtn = document.getElementById('cancel-btn');
+
+      firebase.auth().onAuthStateChanged(async user => {
+        if (!user) {
+          alert("로그인이 필요합니다.");
+          location.href = 'login.html';
+          return;
+        }
+        // email 기준으로 조회!
+        let query = db.collection('reservations')
+          .where('email', '==', user.email);
+
+        const snapshot = await query.orderBy('createdAt', 'desc').limit(1).get();
+        if (snapshot.empty) {
+          reservationInfo.innerHTML = `<p>예약 내역이 없습니다.</p>`;
+          qrCodeView.innerHTML = "";
+          cancelBtn.style.display = 'none';
+          return;
+        }
+
+        const doc = snapshot.docs[0];
+        const reservation = doc.data();
+
+        reservationInfo.innerHTML = `
+          <p><strong>메뉴:</strong> ${reservation.menu}</p>
+          <p><strong>예약 시간:</strong> ${reservation.time}</p>
+          <p><strong>예약 날짜:</strong> ${reservation.date || '-'}</p>
+        `;
+
+        if (reservation.qr) {
+          qrCodeView.innerHTML = "";
+          new QRCode(qrCodeView, {
+            text: reservation.qr,
+            width: 128,
+            height: 128,
+            colorDark: "#000000",
+            colorLight: "#ffffff",
+            correctLevel: QRCode.CorrectLevel.M
+          });
+        }
+
+        cancelBtn.style.display = 'inline-block';
+
+        cancelBtn.onclick = async () => {
+          if (confirm('예약을 취소하시겠습니까?')) {
+            await db.collection('reservations').doc(doc.id).delete();
+            alert('예약이 취소되었습니다.');
+            location.reload();
+          }
+        };
+      });
+    });
+  </script>
+</head>
+<body>
+  <header class="navbar">
+    <div class="nav-title">내 예약 내역</div>
+    <div class="nav-buttons">
+      <button onclick="location.href='index.html'">메인으로</button>
+      <button onclick="location.href='reservation.html'">예약하기</button>
+    </div>
+  </header>
+  <div class="container">
+    <h1>예약 정보</h1>
+    <div id="reservation-info"></div>
+    <div id="qr-code-wrapper">
+      <div id="qr-code-view"></div>
+    </div>
+    <button id="cancel-btn" class="nav-button danger" style="display:none">예약 취소</button>
+  </div>
+</body>
+</html>

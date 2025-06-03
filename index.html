@@ -47,42 +47,44 @@
     const mypageBtn = document.getElementById('mypage-btn');
     const reserveBtn = document.getElementById('reserve-button'); // ✅ 추가
 
-    firebase.auth().onAuthStateChanged(user => {
-      if (user) {
-        // 로그인 상태일 때
-        loginBtn.textContent = '내정보';
-        loginBtn.onclick = () => location.href = 'mypage.html';
+firebase.auth().onAuthStateChanged(user => {
+  const oldBtn = reserveBtn;
+  const newBtn = oldBtn.cloneNode(true);
+  oldBtn.parentNode.replaceChild(newBtn, oldBtn);
 
-        mypageBtn.textContent = '로그아웃';
-        mypageBtn.onclick = () => {
-          firebase.auth().signOut().then(() => {
-            alert("로그아웃되었습니다.");
-            location.reload();
-          });
-        };
+  if (user) {
+    loginBtn.textContent = '내정보';
+    loginBtn.onclick = () => location.href = 'mypage.html';
 
-        // ✅ 로그인 상태일 때만 예약 페이지로 이동
-        reserveBtn.onclick = () => {
-          location.href = 'reservation.html';
-        };
+    mypageBtn.textContent = '로그아웃';
+    mypageBtn.onclick = () => {
+      firebase.auth().signOut().then(() => {
+        alert("로그아웃되었습니다.");
+        location.reload();
+      });
+    };
 
-      } else {
-        loginBtn.textContent = '로그인';
-        loginBtn.onclick = () => location.href = 'login.html';
+    newBtn.onclick = () => {
+      location.href = 'reservation.html';
+    };
 
-        mypageBtn.textContent = '예약내역';
-        mypageBtn.onclick = () => {
-          alert("로그인이 필요합니다.");
-          location.href = 'login.html';
-        };
+  } else {
+    loginBtn.textContent = '로그인';
+    loginBtn.onclick = () => location.href = 'login.html';
 
-        // ✅ 비로그인 상태일 경우 예약 페이지 접근 차단
-        reserveBtn.onclick = () => {
-          alert("로그인이 필요합니다.");
-          location.href = 'login.html';
-        };
-      }
-    });
+    mypageBtn.textContent = '예약내역';
+    mypageBtn.onclick = () => {
+      alert("로그인이 필요합니다.");
+      location.href = 'login.html';
+    };
+
+    newBtn.onclick = () => {
+      alert("로그인이 필요합니다.");
+      location.href = 'login.html';
+    };
+  }
+});
+
   });
 </script>
 

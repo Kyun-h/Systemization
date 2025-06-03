@@ -71,6 +71,8 @@
           <option value="제육볶음" data-price="4500">제육볶음 - 4,500원</option>
           <option value="된장찌개" data-price="4000">된장찌개 - 4,000원</option>
           <option value="김치찌개" data-price="4200">김치찌개 - 4,200원</option>
+          <option value="육회비빔밥" data-price="5500">육회비빔밥 - 5,500원</option>
+          <option value="돼지국밥" data-price="5500">돼지국밥 - 5,500원</option>
         </select>
         <button id="payBtn">테스트 결제 및 예약</button>
         <div id="qrcode"></div>
@@ -255,7 +257,9 @@
         const stockTemplate = {
           "제육볶음": 20,
           "된장찌개": 20,
-          "김치찌개": 20
+          "김치찌개": 20,
+          "육회비빔밥": 20,  
+          "돼지국밥": 20 
         };
         const times = ["11:00~11:30","11:30~12:00","12:00~12:30","12:30~13:00","13:00~13:30"];
         const batch = db.batch();

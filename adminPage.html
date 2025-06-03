@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ko">
 <head>
   <meta charset="UTF-8">
   <title>관리자 대시보드</title>
@@ -9,7 +9,6 @@
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
 
-  <!-- 커스텀 색상 테마 -->
   <style>
     :root {
       --bg: #fff5f5;
@@ -18,11 +17,54 @@
       --accent: #d32f2f;
       --accent-hover: #b71c1c;
       --border: #f5c6cb;
+
+      --card-header-bg: #eeeeee;   /* 카드 헤더 회색 배경 */
+      --card-header-text: #000000; /* 카드 헤더 텍스트 색상 */
     }
 
+
     body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Arial', sans-serif;
       background-color: var(--bg);
       color: var(--text);
+    }
+
+    .navbar {
+      background-color: var(--accent);
+      color: white;
+      padding: 10px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    .nav-title {
+      font-size: 20px;
+      font-weight: bold;
+    }
+
+    .nav-buttons {
+      display: flex;
+      gap: 10px;
+    }
+
+    .nav-buttons button {
+      background-color: white;
+      color: var(--accent);
+      border: none;
+      padding: 8px 14px;
+      border-radius: 5px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .nav-buttons button:hover {
+      background-color: var(--border);
     }
 
     .card {
@@ -32,8 +74,8 @@
     }
 
     .card-header {
-      background-color: var(--accent);
-      color: white;
+      background-color: var(--card-header-bg);
+      color: var(--card-header-text);
       font-weight: bold;
     }
 
@@ -61,59 +103,69 @@
     }
   </style>
 </head>
-<body class="container py-4">
-  <h2 class="text-center fw-bold mb-4">📊 관리자 대시보드</h2>
+<body>
 
-  <!-- 1. 예약 현황 -->
-  <div class="card mb-4">
-    <div class="card-header">📅 예약 현황 (오늘/이번 주)</div>
-    <div class="card-body" id="reservationDashboard"></div>
-  </div>
-
-  <!-- 2. 실시간 입장 체크 -->
-  <div class="card mb-4">
-    <div class="card-header">🛂 실시간 입장자 관리</div>
-    <div class="card-body">
-      <button class="btn btn-accent mb-3" onclick="simulateQRScan()">QR 입장 체크 시뮬레이션</button>
-      <div id="checkinStatus"></div>
+  <!-- 상단바 -->
+  <header class="navbar">
+    <div class="nav-title">크누페이 관리자</div>
+    <div class="nav-buttons">
+      <button onclick="location.href='index.html'">메인으로</button>
+      <button onclick="logout()">로그아웃</button>
     </div>
-  </div>
+  </header>
 
-  <!-- 3. 메뉴/좌석 관리 -->
-  <div class="card mb-4">
-    <div class="card-header">🍽️ 메뉴 및 좌석 수량 관리</div>
-    <div class="card-body">
-      <div class="row g-2 align-items-center mb-3">
-        <div class="col-auto">
-          <label for="menuName" class="col-form-label">메뉴 이름:</label>
-        </div>
-        <div class="col-auto">
-          <input type="text" id="menuName" class="form-control">
-        </div>
-        <div class="col-auto">
-          <label for="menuQty" class="col-form-label">수량:</label>
-        </div>
-        <div class="col-auto">
-          <input type="number" id="menuQty" class="form-control" min="0">
-        </div>
-        <div class="col-auto">
-          <button class="btn btn-accent" onclick="updateMenu()">변경</button>
-        </div>
+  <!-- 대시보드 내용 -->
+  <div class="container py-4">
+    <h2 class="text-center fw-bold mb-4">관리자 대시보드</h2>
+
+    <div class="card mb-4">
+      <div class="card-header">📅 예약 현황 (오늘/이번 주)</div>
+      <div class="card-body" id="reservationDashboard"></div>
+    </div>
+
+    <div class="card mb-4">
+      <div class="card-header">🛂 실시간 입장자 관리</div>
+      <div class="card-body">
+        <button class="btn btn-accent mb-3" onclick="simulateQRScan()">QR 입장 체크 시뮬레이션</button>
+        <div id="checkinStatus"></div>
       </div>
-      <div id="menuList"></div>
+    </div>
+
+    <div class="card mb-4">
+      <div class="card-header">🍽️ 메뉴 및 좌석 수량 관리</div>
+      <div class="card-body">
+        <div class="row g-2 align-items-center mb-3">
+          <div class="col-auto">
+            <label for="menuName" class="col-form-label">메뉴 이름:</label>
+          </div>
+          <div class="col-auto">
+            <input type="text" id="menuName" class="form-control">
+          </div>
+          <div class="col-auto">
+            <label for="menuQty" class="col-form-label">수량:</label>
+          </div>
+          <div class="col-auto">
+            <input type="number" id="menuQty" class="form-control" min="0">
+          </div>
+          <div class="col-auto">
+            <button class="btn btn-accent" onclick="updateMenu()">변경</button>
+          </div>
+        </div>
+        <div id="menuList"></div>
+      </div>
+    </div>
+
+    <div class="card mb-4">
+      <div class="card-header">💬 사용자 피드백 / 📢 공지사항 발송</div>
+      <div class="card-body">
+        <div id="feedbackList" class="mb-3"></div>
+        <textarea id="announcementText" class="form-control" rows="2" placeholder="공지사항 내용 입력"></textarea>
+        <button class="btn btn-accent mt-2" onclick="sendAnnouncement()">공지사항 발송</button>
+      </div>
     </div>
   </div>
 
-  <!-- 4. 피드백/공지사항 -->
-  <div class="card mb-4">
-    <div class="card-header">💬 사용자 피드백 / 📢 공지사항 발송</div>
-    <div class="card-body">
-      <div id="feedbackList" class="mb-3"></div>
-      <textarea id="announcementText" class="form-control" rows="2" placeholder="공지사항 내용 입력"></textarea>
-      <button class="btn btn-accent mt-2" onclick="sendAnnouncement()">공지사항 발송</button>
-    </div>
-  </div>
-
+  <!-- 스크립트 -->
   <script>
     const firebaseConfig = {
       apiKey: "YOUR_API_KEY",
@@ -128,6 +180,15 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
     const rtdb = firebase.database();
+
+    function logout() {
+      firebase.auth().signOut().then(() => {
+        alert("로그아웃 되었습니다.");
+        location.href = "index.html";
+      }).catch((error) => {
+        console.error("로그아웃 오류:", error);
+      });
+    }
 
     async function loadReservations() {
       const today = new Date().toISOString().split('T')[0];

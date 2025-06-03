@@ -185,6 +185,7 @@
   <header class="navbar">
     <div class="nav-title">내 예약 내역</div>
     <div class="nav-buttons">
+      <button onclick="showAdminPrompt()">관리자</button>
       <button onclick="location.href='index.html'">메인으로</button>
       <button onclick="location.href='reservation.html'">예약하기</button>
     </div>
@@ -198,5 +199,19 @@
     </div>
     <button id="cancel-btn" class="nav-button danger" style="display:none">예약 취소</button>
   </div>
+  
+  <script>
+    function showAdminPrompt() {
+      const adminKey = prompt("관리자 키를 입력하세요:");
+      const correctKey = "admin1234";  // 실제 서비스에서는 서버 또는 Firebase에서 확인해야 안전합니다.
+
+      if (adminKey === correctKey) {
+        window.location.href = "adminPage.html";
+      } else if (adminKey !== null) {
+        alert("잘못된 관리자 키입니다.");
+      }
+    }
+  </script>
+
 </body>
 </html>

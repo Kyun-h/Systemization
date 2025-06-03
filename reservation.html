@@ -52,6 +52,7 @@
     </aside>
     <main class="content">
       <div class="container">
+        <!-- ... 예약 폼 그대로 ... -->
         <label for="date">날짜 (오늘만 선택 가능):</label>
         <input type="date" id="date" disabled />
         <p class="info">※ 예약 시간 30분 안에 오지 않으면 예약이 취소됩니다.</p>
@@ -73,9 +74,12 @@
         </select>
         <button id="payBtn">테스트 결제 및 예약</button>
         <div id="qrcode"></div>
+
+        <!-- 초기화(관리자용) 버튼, 아래에 추가 -->
+        <button id="init-stock-btn" style="margin-top:32px;background:#aaa;color:#fff;">오늘 식권 재고 초기화 (관리자용)</button>
       </div>
-    </main>
-  </div>
+
+<!-- ... 기존 코드 계속 ... -->
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <script src="https://js.tosspayments.com/v1"></script>
@@ -137,47 +141,29 @@
       const TODAY = new Date().toISOString().split('T')[0];
       document.getElementById('date').value = TODAY;
 
-      const stockData = {
-        "11:00~11:30": [
-          { menu: "제육볶음", left: 10 },
-          { menu: "된장찌개", left: 15 },
-          { menu: "김치찌개", left: 12 }
-        ],
-        "11:30~12:00": [
-          { menu: "제육볶음", left: 9 },
-          { menu: "된장찌개", left: 13 },
-          { menu: "김치찌개", left: 14 }
-        ],
-        "12:00~12:30": [
-          { menu: "제육볶음", left: 8 },
-          { menu: "된장찌개", left: 10 },
-          { menu: "김치찌개", left: 11 }
-        ],
-        "12:30~13:00": [
-          { menu: "제육볶음", left: 7 },
-          { menu: "된장찌개", left: 8 },
-          { menu: "김치찌개", left: 9 }
-        ],
-        "13:00~13:30": [
-          { menu: "제육볶음", left: 6 },
-          { menu: "된장찌개", left: 7 },
-          { menu: "김치찌개", left: 8 }
-        ]
-      };
-
+      // === Firestore 식권 재고 관리 ===
       const timeslot = document.getElementById('timeslot');
       const menu = document.getElementById('menu');
       const stockDiv = document.getElementById('menuStock');
 
-      function renderStock() {
+      async function fetchAndRenderStock() {
         const slot = timeslot.value;
-        const stockList = stockData[slot] || [];
-        stockDiv.innerHTML = stockList.map(item => `<strong>${item.menu}</strong>: ${item.left}개 남음`).join('<br>');
+        const docRef = db.collection('menuStocks').doc(TODAY)
+                         .collection('timeslots').doc(slot);
+        const doc = await docRef.get();
+        let stockList = [];
+        if (doc.exists) {
+          const data = doc.data();
+          stockList = Object.entries(data).map(([menu, left]) => ({ menu, left }));
+        }
+        stockDiv.innerHTML = stockList.length
+          ? stockList.map(item => `<strong>${item.menu}</strong>: ${item.left}개 남음`).join('<br>')
+          : '해당 시간대의 식권 정보가 없습니다.';
       }
 
-      timeslot.addEventListener('change', renderStock);
-      menu.addEventListener('change', renderStock);
-      renderStock();
+      timeslot.addEventListener('change', fetchAndRenderStock);
+      menu.addEventListener('change', fetchAndRenderStock);
+      fetchAndRenderStock();
 
       const toss = TossPayments('test_ck_GePWvyJnrKKGbgeMkzx1rgLzN97E');
       document.getElementById('payBtn').addEventListener('click', () => {
@@ -185,6 +171,10 @@
         if (!user) {
           alert("로그인이 필요합니다.");
           location.href = 'login.html';
+          return;
+        }
+        if (!menu.value) {
+          alert("메뉴를 선택해주세요.");
           return;
         }
         sessionStorage.setItem('reserveSlot', timeslot.value);
@@ -200,13 +190,13 @@
         });
       });
 
+      // 예약 + 식권 차감(트랜잭션)
       const params = new URLSearchParams(location.search);
       if (params.get('payment') === 'success') {
         alert('테스트 결제가 성공했습니다! 자동 예약 및 QR 발급 중...');
         const slotVal = sessionStorage.getItem('reserveSlot');
         const menuVal = sessionStorage.getItem('reserveMenu');
         const qrText = `${TODAY}|${slotVal}|${menuVal}`;
-
         firebase.auth().onAuthStateChanged(user => {
           if (!user) {
             alert('유저 정보를 불러올 수 없습니다. 다시 로그인 해주세요.');
@@ -214,33 +204,74 @@
             return;
           }
           const name = user.displayName || user.email || "사용자";
-          const email = user.email; // email 기준 저장!
-          db.collection('reservations').add({
-            name: name,
-            email: email,
-            date: TODAY,
-            time: slotVal,
-            menu: menuVal,
-            qr: qrText,
-            createdAt: firebase.firestore.FieldValue.serverTimestamp()
-          }).then(() => {
+          const email = user.email;
+          const menuStockRef = db.collection('menuStocks').doc(TODAY)
+                                .collection('timeslots').doc(slotVal);
+
+          db.runTransaction(async (transaction) => {
+            const stockDoc = await transaction.get(menuStockRef);
+            if (!stockDoc.exists) throw "해당 시간대/메뉴 정보 없음";
+            const stockData = stockDoc.data();
+            if (!stockData[menuVal] || stockData[menuVal] <= 0) {
+              throw "해당 메뉴가 품절되었습니다.";
+            }
+            // 재고 감소
+            transaction.update(menuStockRef, {
+              [menuVal]: stockData[menuVal] - 1
+            });
+            // 예약 정보 저장
+            return db.collection('reservations').add({
+              name: name,
+              email: email,
+              date: TODAY,
+              time: slotVal,
+              menu: menuVal,
+              qr: qrText,
+              createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+          })
+          .then(() => {
             document.getElementById('qrcode').innerHTML = '';
             new QRCode(document.getElementById('qrcode'), {
               text: qrText,
               width: 200,
               height: 200
             });
-            renderStock();
+            fetchAndRenderStock();
             sessionStorage.removeItem('reserveSlot');
             sessionStorage.removeItem('reserveMenu');
             history.replaceState(null, '', location.pathname);
-          }).catch(err => {
-            alert('예약 정보 저장에 실패했습니다.');
+          })
+          .catch(err => {
+            alert('예약 또는 재고 관리에 실패했습니다: ' + err);
             console.error(err);
           });
         });
       }
-    });
+
+      // [관리자용] 오늘 재고 1회 초기화 버튼
+      document.getElementById('init-stock-btn').onclick = async function() {
+        if (!confirm('오늘 식권 재고를 초기화하시겠습니까?\n이미 등록된 재고는 덮어씁니다.')) return;
+        const stockTemplate = {
+          "제육볶음": 20,
+          "된장찌개": 20,
+          "김치찌개": 20
+        };
+        const times = ["11:00~11:30","11:30~12:00","12:00~12:30","12:30~13:00","13:00~13:30"];
+        const batch = db.batch();
+        times.forEach(slot => {
+          const ref = db.collection('menuStocks').doc(TODAY)
+                       .collection('timeslots').doc(slot);
+          batch.set(ref, stockTemplate, { merge: false });
+        });
+        await batch.commit();
+        alert('오늘 식권 재고가 초기화되었습니다.');
+        fetchAndRenderStock();
+        // 버튼 삭제 (최초 1회만!)
+        document.getElementById('init-stock-btn').remove();
+      };
+
+    }); // DOMContentLoaded end
   </script>
 </body>
 </html>

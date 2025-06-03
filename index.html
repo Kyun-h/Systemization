@@ -7,8 +7,10 @@
   <link rel="stylesheet" href="style.css" />
 
   <!-- Firebase SDK -->
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+
   <script>
     const firebaseConfig = {
       apiKey: "AIzaSyCRC4GkhNoz4MH3Mbxb5a38puGNu2Fox4E",
@@ -40,55 +42,39 @@
     <button id="reserve-button">예약하러 가기</button>
   </div>
 
-  <!-- ✅ Firebase 로그인 상태에 따른 버튼 처리 -->
+  <!-- ✅ 로그인/마이페이지 버튼 동작만 남김 -->
   <script>
   document.addEventListener('DOMContentLoaded', () => {
     const loginBtn = document.getElementById('login-btn');
     const mypageBtn = document.getElementById('mypage-btn');
-    const reserveBtn = document.getElementById('reserve-button'); // ✅ 추가
 
-firebase.auth().onAuthStateChanged(user => {
-  const oldBtn = reserveBtn;
-  const newBtn = oldBtn.cloneNode(true);
-  oldBtn.parentNode.replaceChild(newBtn, oldBtn);
+    firebase.auth().onAuthStateChanged(user => {
+      if (user) {
+        loginBtn.textContent = '내정보';
+        loginBtn.onclick = () => location.href = 'mypage.html';
 
-  if (user) {
-    loginBtn.textContent = '내정보';
-    loginBtn.onclick = () => location.href = 'mypage.html';
+        mypageBtn.textContent = '로그아웃';
+        mypageBtn.onclick = () => {
+          firebase.auth().signOut().then(() => {
+            alert("로그아웃되었습니다.");
+            location.reload();
+          });
+        };
+      } else {
+        loginBtn.textContent = '로그인';
+        loginBtn.onclick = () => location.href = 'login.html';
 
-    mypageBtn.textContent = '로그아웃';
-    mypageBtn.onclick = () => {
-      firebase.auth().signOut().then(() => {
-        alert("로그아웃되었습니다.");
-        location.reload();
-      });
-    };
-
-    newBtn.onclick = () => {
-      location.href = 'reservation.html';
-    };
-
-  } else {
-    loginBtn.textContent = '로그인';
-    loginBtn.onclick = () => location.href = 'login.html';
-
-    mypageBtn.textContent = '예약내역';
-    mypageBtn.onclick = () => {
-      alert("로그인이 필요합니다.");
-      location.href = 'login.html';
-    };
-
-    newBtn.onclick = () => {
-      alert("로그인이 필요합니다.");
-      location.href = 'login.html';
-    };
-  }
-});
-
+        mypageBtn.textContent = '예약내역';
+        mypageBtn.onclick = () => {
+          alert("로그인이 필요합니다.");
+          location.href = 'login.html';
+        };
+      }
+    });
   });
-</script>
+  </script>
 
-  <!-- 메뉴 렌더링 -->
+  <!-- 메뉴 및 시간대별 식권 렌더링은 menu.js에서 모두 처리 -->
   <script type="module" src="./menu.js"></script>
 </body>
 </html>

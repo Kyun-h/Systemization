@@ -5,11 +5,9 @@
   <title>관리자 대시보드</title>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
-
   <style>
     :root {
       --bg: #fff5f5;
@@ -21,7 +19,6 @@
       --card-header-bg: #eeeeee;
       --card-header-text: #000000;
     }
-
     body {
       margin: 0;
       padding: 0;
@@ -29,7 +26,6 @@
       background-color: var(--bg);
       color: var(--text);
     }
-
     .navbar {
       background-color: var(--accent);
       color: white;
@@ -41,17 +37,14 @@
       width: 100%;
       box-sizing: border-box;
     }
-
     .nav-title {
       font-size: 20px;
       font-weight: bold;
     }
-
     .nav-buttons {
       display: flex;
       gap: 10px;
     }
-
     .nav-buttons button {
       background-color: white;
       color: var(--accent);
@@ -61,42 +54,34 @@
       font-weight: bold;
       cursor: pointer;
     }
-
     .nav-buttons button:hover {
       background-color: var(--border);
     }
-
     .card {
       background-color: var(--card-bg);
       border: 1px solid var(--border);
       box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
     }
-
     .card-header {
       background-color: var(--card-header-bg);
       color: var(--card-header-text);
       font-weight: bold;
     }
-
     .btn-accent {
       background-color: var(--accent);
       color: white;
       border: none;
     }
-
     .btn-accent:hover {
       background-color: var(--accent-hover);
     }
-
     .form-control:focus {
       border-color: var(--accent);
       box-shadow: 0 0 0 0.2rem rgba(211, 47, 47, 0.25);
     }
-
     hr {
       border-color: var(--border);
     }
-
     textarea::placeholder {
       color: #8b4444;
     }
@@ -162,18 +147,16 @@
 
   <script>
     const firebaseConfig = {
-      apiKey: "YOUR_API_KEY",
-      authDomain: "YOUR_AUTH_DOMAIN",
-      projectId: "YOUR_PROJECT_ID",
-      databaseURL: "YOUR_DATABASE_URL",
-      storageBucket: "YOUR_STORAGE_BUCKET",
-      messagingSenderId: "YOUR_SENDER_ID",
-      appId: "YOUR_APP_ID"
+      apiKey: "AIzaSyCRC4GkhNoz4MH3Mbxb5a38puGNu2Fox4E",
+      authDomain: "systemization-dc342.firebaseapp.com",
+      projectId: "systemization-dc342",
+      storageBucket: "systemization-dc342.firebasestorage.app",
+      messagingSenderId: "8105541836",
+      appId: "1:8105541836:web:230c5c7867f3bcb62cc269"
     };
 
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
-    const rtdb = firebase.database();
 
     function logout() {
       firebase.auth().signOut().then(() => {
@@ -192,10 +175,18 @@
         return d.toISOString().split('T')[0];
       }).reverse();
 
-      const data = [];
+      const dailyCounts = [];
+      const menuCounts = {};
+
       for (const day of week) {
         const snapshot = await db.collection("reservations").where("date", "==", day).get();
-        data.push(snapshot.size);
+        dailyCounts.push(snapshot.size);
+
+        snapshot.forEach(doc => {
+          const data = doc.data();
+          const menu = data.menu || "기타";
+          menuCounts[menu] = (menuCounts[menu] || 0) + 1;
+        });
       }
 
       new Chart(document.getElementById('reservationChart'), {
@@ -204,7 +195,7 @@
           labels: week,
           datasets: [{
             label: '일별 예약 수',
-            data: data,
+            data: dailyCounts,
             borderColor: 'rgba(211,47,47,1)',
             backgroundColor: 'rgba(211,47,47,0.1)',
             tension: 0.3
@@ -216,21 +207,43 @@
         }
       });
 
-      document.getElementById("reservationTable").innerHTML = week.map((d, i) => `<div>${d}: ${data[i]}건</div>`).join('');
+      let html = `<h6 class="fw-bold">📆 주간 예약 통계</h6>`;
+      week.forEach((d, i) => {
+        html += `<div>${d}: ${dailyCounts[i]}건</div>`;
+      });
+
+      html += `<hr><h6 class="fw-bold">🍱 메뉴별 예약 수</h6>`;
+      for (const [menu, count] of Object.entries(menuCounts)) {
+        html += `<div>${menu}: ${count}건</div>`;
+      }
+
+      document.getElementById("reservationTable").innerHTML = html;
     }
 
     async function simulateQRScan() {
       const uid = "user123";
-      await rtdb.ref("checkins/" + uid).set({ time: Date.now() });
+      await db.collection("checkins").doc(uid).set({
+        time: Date.now()
+      });
       loadCheckins();
     }
 
     function loadCheckins() {
-      rtdb.ref("checkins").once("value", (snapshot) => {
-        const data = snapshot.val();
+      db.collection("checkins").get().then(snapshot => {
         let html = `<ul class="list-group">`;
-        for (let uid in data) {
-          html += `<li class="list-group-item">${uid} 입장 시간: ${new Date(data[uid].time).toLocaleTimeString()}</li>`;
-        }
+        snapshot.forEach(doc => {
+          const data = doc.data();
+          html += `<li class="list-group-item">${doc.id} 입장 시간: ${new Date(data.time).toLocaleTimeString()}</li>`;
+        });
         html += `</ul>`;
-        document.ge
+        document.getElementById("checkinStatus").innerHTML = html;
+      });
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      loadReservations();
+      loadCheckins();
+    });
+  </script>
+</body>
+</html>

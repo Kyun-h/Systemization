@@ -106,9 +106,18 @@ async function updateMenus() {
   const today = new Date().toISOString().split('T')[0];
   const timeSlots = ["11:00~11:30", "11:30~12:00", "12:00~12:30", "12:30~13:00", "13:00~13:30"];
 
+  // 🔍 입력값 파싱 확인용 로그
+  console.log("[DEBUG] 입력값 ↓");
+  console.log(input);
+
   const updates = input.split('\n').map(line => {
     const [name, countStr] = line.split(':');
-    return { name: name.trim(), count: parseInt(countStr.trim()) };
+    const parsed = {
+      name: name?.trim(),
+      count: parseInt(countStr?.trim())
+    };
+    console.log("[DEBUG] 파싱된 메뉴:", parsed);
+    return parsed;
   });
 
   try {
@@ -118,11 +127,17 @@ async function updateMenus() {
       const currentData = doc.exists ? doc.data() : {};
 
       for (const { name, count } of updates) {
+        if (!name || isNaN(count)) {
+          console.warn(`[SKIP] 유효하지 않은 항목: name="${name}", count="${count}"`);
+          continue;
+        }
         currentData[name] = count;
       }
 
+      console.log(`[DEBUG] ${time} 업데이트 데이터:`, currentData);
       await docRef.set(currentData);
     }
+
     alert("메뉴 수량이 성공적으로 업데이트되었습니다.");
     loadCurrentMenus();
   } catch (err) {
@@ -131,32 +146,37 @@ async function updateMenus() {
   }
 }
 
+
 // ✅ 현재 메뉴 수량 목록 표시
 async function loadCurrentMenus() {
   const today = new Date().toISOString().split('T')[0];
-  const timeSlots = ["11:00~11:30", "11:30~12:00", "12:00~12:30", "12:30~13:00", "13:00~13:30"];
-  const aggregate = {};
+  const timeSlot = document.getElementById('timeSlotSelect')?.value;
 
-  for (const time of timeSlots) {
-    const docRef = db.collection("menuStocks").doc(today).collection("timeslots").doc(time);
-    const doc = await docRef.get();
-    if (doc.exists) {
-      const data = doc.data();
-      for (const [name, count] of Object.entries(data)) {
-        aggregate[name] = (aggregate[name] || 0) + parseInt(count || 0);
-      }
-    }
+  if (!timeSlot) {
+    document.getElementById("menuList").innerHTML = "<div class='text-muted'>시간대를 선택하면 수량이 표시됩니다.</div>";
+    return;
   }
 
+  const docRef = db.collection("menuStocks").doc(today).collection("timeslots").doc(timeSlot);
+  const doc = await docRef.get();
+  if (!doc.exists) {
+    document.getElementById("menuList").innerHTML = `<div class='text-muted'>${timeSlot}에 등록된 수량이 없습니다.</div>`;
+    return;
+  }
+
+  const data = doc.data();
   let html = '<ul class="list-group">';
-  for (const [name, total] of Object.entries(aggregate)) {
+  for (const [name, count] of Object.entries(data)) {
     html += `<li class="list-group-item d-flex justify-content-between align-items-center">
-               ${name}<span class="badge bg-danger rounded-pill">${total}</span>
+               ${name}<span class="badge bg-danger rounded-pill">${count}</span>
              </li>`;
   }
   html += '</ul>';
   document.getElementById("menuList").innerHTML = html;
 }
+document.getElementById('timeSlotSelect').addEventListener('change', () => {
+  loadCurrentMenus();
+});
 
 // 🔄 초기 로딩
 document.addEventListener("DOMContentLoaded", () => {

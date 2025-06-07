@@ -122,6 +122,16 @@
           <div class="card-header">🍽️ 메뉴 수량 변경 및 마감</div>
           <div class="card-body">
             <div class="mb-3">
+              <label for="timeSlotSelect" class="form-label">변경할 시간대 선택</label>
+              <select id="timeSlotSelect" class="form-select mb-3">
+                <option value="">-- 시간대 선택 --</option>
+                <option value="11:00~11:30">11:00~11:30</option>
+                <option value="11:30~12:00">11:30~12:00</option>
+                <option value="12:00~12:30">12:00~12:30</option>
+                <option value="12:30~13:00">12:30~13:00</option>
+                <option value="13:00~13:30">13:00~13:30</option>
+              </select>
+
               <label for="menuBulkInput" class="form-label">여러 메뉴 입력 (예: 김밥:10)</label>
               <textarea id="menuBulkInput" class="form-control" rows="5" placeholder="예:&#10;김밥:10&#10;떡볶이:5&#10;순대:0"></textarea>
               <button class="btn btn-accent mt-2" onclick="updateMenus()">일괄 변경</button>

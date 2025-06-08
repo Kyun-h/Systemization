@@ -134,51 +134,87 @@
       }
     }
   </style>
+
+  <!-- 외부 라이브러리 -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+
   <script type="module">
-    import { mockReservation } from './mockApi.js';
-    
+    const firebaseConfig = {
+      apiKey: "AIzaSyCRC4GkhNoz4MH3Mbxb5a38puGNu2Fox4E",
+      authDomain: "systemization-dc342.firebaseapp.com",
+      projectId: "systemization-dc342",
+      appId: "1:8105541836:web:230c5c7867f3bcb62cc269"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
     document.addEventListener('DOMContentLoaded', () => {
-      const reservation = JSON.parse(localStorage.getItem('reservation'));
       const reservationInfo = document.getElementById('reservation-info');
       const qrCodeView = document.getElementById('qr-code-view');
       const cancelBtn = document.getElementById('cancel-btn');
 
-      if (reservation) {
-        reservationInfo.innerHTML = `
-          <p><strong>메뉴:</strong> ${reservation.menu}</p>
-          <p><strong>예약 시간:</strong> ${reservation.time}</p>
-          <p><strong>예약 날짜:</strong> ${reservation.date || '-'} </p>
-        `;
-
-        // QR 코드 텍스트가 존재할 때만 생성
-        if (reservation.qrText) {
-          qrCodeView.innerHTML = "";
-          new QRCode(qrCodeView, {
-            text: reservation.qrText,
-            width: 128,
-            height: 128,
-            colorDark: "#000000",
-            colorLight: "#ffffff",
-            correctLevel: QRCode.CorrectLevel.M
-          });
+      firebase.auth().onAuthStateChanged(async (user) => {
+        if (!user) {
+          alert("로그인이 필요합니다.");
+          location.href = 'login.html';
+          return;
         }
-        
-        cancelBtn.style.display = 'inline-block';
-      } else {
-        reservationInfo.innerHTML = `<p>예약 내역이 없습니다.</p>`;
-        qrCodeView.innerHTML = "";
-        cancelBtn.style.display = 'none';
-      }
 
-      cancelBtn.addEventListener('click', () => {
-        if (confirm('예약을 취소하시겠습니까?')) {
-          mockReservation.cancel(reservation);
-          alert('예약이 취소되었습니다.');
-          location.reload();
+        const email = user.email;
+
+        const snapshot = await db.collection('reservations')
+          .where('email', '==', email)
+          .orderBy('createdAt', 'desc')
+          .limit(1)
+          .get();
+
+        if (!snapshot.empty) {
+          const data = snapshot.docs[0].data();
+          reservationInfo.innerHTML = `
+            <p><strong>메뉴:</strong> ${data.menu}</p>
+            <p><strong>예약 시간:</strong> ${data.time}</p>
+            <p><strong>예약 날짜:</strong> ${data.date}</p>
+          `;
+          if (data.qr) {
+            qrCodeView.innerHTML = '';
+            new QRCode(qrCodeView, {
+              text: data.qr,
+              width: 128,
+              height: 128,
+              colorDark: "#000000",
+              colorLight: "#ffffff",
+              correctLevel: QRCode.CorrectLevel.M
+            });
+          }
+          cancelBtn.style.display = 'inline-block';
+
+          cancelBtn.onclick = async () => {
+            if (confirm('예약을 취소하시겠습니까?')) {
+              await db.collection('reservations').doc(snapshot.docs[0].id).delete();
+              alert('예약이 취소되었습니다.');
+              location.reload();
+            }
+          };
+        } else {
+          reservationInfo.innerHTML = `<p>예약 내역이 없습니다.</p>`;
+          qrCodeView.innerHTML = '';
+          cancelBtn.style.display = 'none';
         }
       });
     });
+
+    function showAdminPrompt() {
+      const adminKey = prompt("관리자 키를 입력하세요:");
+      const correctKey = "admin1234";
+      if (adminKey === correctKey) {
+        window.location.href = "adminPage.html";
+      } else if (adminKey !== null) {
+        alert("잘못된 관리자 키입니다.");
+      }
+    }
   </script>
 </head>
 <body>
@@ -199,19 +235,5 @@
     </div>
     <button id="cancel-btn" class="nav-button danger" style="display:none">예약 취소</button>
   </div>
-  
-  <script>
-    function showAdminPrompt() {
-      const adminKey = prompt("관리자 키를 입력하세요:");
-      const correctKey = "admin1234";  // 실제 서비스에서는 서버 또는 Firebase에서 확인해야 안전합니다.
-
-      if (adminKey === correctKey) {
-        window.location.href = "adminPage.html";
-      } else if (adminKey !== null) {
-        alert("잘못된 관리자 키입니다.");
-      }
-    }
-  </script>
-
 </body>
 </html>

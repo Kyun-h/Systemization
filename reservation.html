@@ -97,6 +97,7 @@
       appId: "1:8105541836:web:230c5c7867f3bcb62cc269"
     };
     firebase.initializeApp(firebaseConfig);
+    const FieldValue = firebase.firestore.FieldValue;
     const db = firebase.firestore();
 
     document.addEventListener('DOMContentLoaded', () => {
@@ -210,6 +211,7 @@
           const menuStockRef = db.collection('menuStocks').doc(TODAY)
                                 .collection('timeslots').doc(slotVal);
 
+          const reservationRef = db.collection('reservations').doc();  // 문서 미리 생성
           db.runTransaction(async (transaction) => {
             const stockDoc = await transaction.get(menuStockRef);
             if (!stockDoc.exists) throw "해당 시간대/메뉴 정보 없음";
@@ -222,17 +224,18 @@
               [menuVal]: stockData[menuVal] - 1
             });
             // 예약 정보 저장
-            return db.collection('reservations').add({
+            transaction.set(reservationRef, {
               name: name,
               email: email,
               date: TODAY,
               time: slotVal,
               menu: menuVal,
               qr: qrText,
-              createdAt: firebase.firestore.FieldValue.serverTimestamp()
+              createdAt: FieldValue.serverTimestamp()
             });
           })
           .then(() => {
+            alert('예약이 완료되었습니다!');
             document.getElementById('qrcode').innerHTML = '';
             new QRCode(document.getElementById('qrcode'), {
               text: qrText,
@@ -243,10 +246,8 @@
             sessionStorage.removeItem('reserveSlot');
             sessionStorage.removeItem('reserveMenu');
             history.replaceState(null, '', location.pathname);
-          })
-          .catch(err => {
-            alert('예약 또는 재고 관리에 실패했습니다: ' + err);
-            console.error(err);
+          }).catch(err => {
+            alert('예약 실패: ' + err);
           });
         });
       }

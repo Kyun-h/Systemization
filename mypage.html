@@ -204,17 +204,18 @@
           cancelBtn.style.display = 'none';
         }
       });
-    });
 
-    function showAdminPrompt() {
-      const adminKey = prompt("관리자 키를 입력하세요:");
-      const correctKey = "admin1234";
-      if (adminKey === correctKey) {
-        window.location.href = "adminPage.html";
-      } else if (adminKey !== null) {
-        alert("잘못된 관리자 키입니다.");
-      }
-    }
+      // ✅ 관리자 키 입력 함수도 module 블록 안에 같이 포함시켜야 함
+      window.showAdminPrompt = function () {
+        const adminKey = prompt("관리자 키를 입력하세요:");
+        const correctKey = "admin1234";
+        if (adminKey === correctKey) {
+          window.location.href = "adminPage.html";
+        } else if (adminKey !== null) {
+          alert("잘못된 관리자 키입니다.");
+        }
+      };
+    });
   </script>
 </head>
 <body>

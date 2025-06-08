@@ -178,9 +178,52 @@ document.getElementById('timeSlotSelect').addEventListener('change', () => {
   loadCurrentMenus();
 });
 
-// 🔄 초기 로딩
+// ✅ 오늘 예약된 메뉴 집계 및 표시
+async function loadTodayReservations() {
+  const todayReservationsDiv = document.getElementById('todayReservations');
+  todayReservationsDiv.textContent = '로딩 중...';
+
+  // 오늘 날짜 (YYYY-MM-DD)
+  const today = new Date().toISOString().split('T')[0];
+
+  try {
+    // reservations 컬렉션에서 오늘(date == today) 예약만 가져오기
+    const snapshot = await db.collection('reservations').where('date', '==', today).get();
+
+    if (snapshot.empty) {
+      todayReservationsDiv.textContent = '오늘 예약된 메뉴가 없습니다.';
+      return;
+    }
+
+    // 메뉴별 집계
+    const menuCount = {};
+    snapshot.forEach(doc => {
+      const data = doc.data();
+      const menu = data.menu || "기타";
+      menuCount[menu] = (menuCount[menu] || 0) + 1;
+    });
+
+    // HTML 출력 (부트스트랩 스타일)
+    let html = '<ul class="list-group">';
+    Object.entries(menuCount).forEach(([menu, count]) => {
+      html += `
+        <li class="list-group-item d-flex justify-content-between align-items-center">
+          ${menu}
+          <span class="badge bg-danger rounded-pill">${count}개</span>
+        </li>
+      `;
+    });
+    html += '</ul>';
+    todayReservationsDiv.innerHTML = html;
+  } catch (err) {
+    todayReservationsDiv.textContent = '오류 발생: ' + err.message;
+  }
+}
+
+// 🔄 기존 초기 로딩 부분에 loadTodayReservations 추가!
 document.addEventListener("DOMContentLoaded", () => {
   loadReservations();
   loadCheckins();
   loadCurrentMenus();
+  loadTodayReservations();  // <-- 추가!
 });

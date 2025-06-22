@@ -146,6 +146,26 @@ async function updateMenus() {
   }
 }
 
+// 공지사항 Firestore에 저장 기능
+function sendAnnouncement() {
+  const message = document.getElementById('announcementText').value.trim();
+  if (!message) {
+    alert('공지사항 내용을 입력하세요.');
+    return;
+  }
+
+  db.collection('announcements').add({
+    message: message,
+    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+  }).then(() => {
+    alert('공지사항이 발송되었습니다.');
+    document.getElementById('announcementText').value = '';
+  }).catch((error) => {
+    console.error("공지사항 저장 실패:", error);
+    alert("공지사항 저장 실패");
+  });
+}
+
 
 // ✅ 현재 메뉴 수량 목록 표시
 async function loadCurrentMenus() {
@@ -386,5 +406,5 @@ document.addEventListener("DOMContentLoaded", () => {
   loadCheckins();
   loadCurrentMenus();
   loadTodayReservations();  // <-- 추가!
-   loadWeekSummary(); // ✅ 추가!
+  loadWeekSummary(); // ✅ 추가!
 });

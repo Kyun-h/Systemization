@@ -219,11 +219,32 @@
           alert("잘못된 관리자 키입니다.");
         }
       };
+
+      // 최신 공지사항 불러오기
+      db.collection('announcements')
+        .orderBy('createdAt', 'desc')
+        .limit(1)
+        .get()
+        .then(snapshot => {
+          if (!snapshot.empty) {
+            const data = snapshot.docs[0].data();
+            const banner = document.getElementById('announcement-banner');
+            banner.textContent = `📢 공지사항: ${data.message}`;
+            banner.style.display = 'block';
+          }
+        })
+        .catch(err => {
+          console.error('공지사항 로딩 오류:', err);
+        });
     });
   </script>
 </head>
 <body>
+  <div id="announcement-banner" style="background-color:#ffe4e1; color:#8b0000; padding:12px; text-align:center; font-weight:bold; display:none;">
+    <!-- 공지 내용 들어감 -->
+  </div>
   <header class="navbar">
+
     <div class="nav-title">내 예약 내역</div>
     <div class="nav-buttons">
       <button onclick="showAdminPrompt()">관리자</button>

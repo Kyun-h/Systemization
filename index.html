@@ -37,7 +37,7 @@
     border-radius: 8px;
     box-shadow: 0 2px 6px rgba(0,0,0,0.1);
     font-weight: bold;
-    display: none;
+    visibility: hidden;
     z-index: 10;
   ">
     <div style="margin-bottom: 8px;">📢 공지사항</div>
@@ -101,15 +101,23 @@
       .limit(10) // 최근 10개까지 표시
       .get()
       .then(snapshot => {
-        if (!snapshot.empty) {
-          snapshot.forEach(doc => {
-            const li = document.createElement('li');
-            li.textContent = doc.data().message;
-            list.appendChild(li);
-          });
-          box.style.display = 'block';
-        }
-      })
+      list.innerHTML = ''; // 기존 내용 초기화
+
+      if (!snapshot.empty) {
+        snapshot.forEach(doc => {
+          const li = document.createElement('li');
+          li.textContent = doc.data().message;
+          list.appendChild(li);
+        });
+      } else {
+        const li = document.createElement('li');
+        li.textContent = '공지사항이 없습니다.';
+        list.appendChild(li);
+      }
+
+      // 박스는 항상 보이게
+      box.style.visibility = 'visible';
+    })
       .catch(err => {
         console.error('공지사항 로딩 오류:', err);
       });

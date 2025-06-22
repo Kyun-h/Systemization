@@ -240,6 +240,24 @@ async function loadTodayReservations() {
   }
 }
 
+// 공지사항 삭제
+function clearAnnouncements() {
+  if (!confirm("정말 모든 공지사항을 삭제하시겠습니까?")) return;
+
+  db.collection("announcements").get().then(snapshot => {
+    const batch = db.batch();
+    snapshot.forEach(doc => {
+      batch.delete(doc.ref);
+    });
+    return batch.commit();
+  }).then(() => {
+    alert("모든 공지사항이 삭제되었습니다.");
+  }).catch(error => {
+    console.error("공지사항 삭제 실패:", error);
+    alert("삭제 중 오류 발생");
+  });
+}
+
 
 // 이번 주 월~일 날짜 리스트 반환 함수
 function getWeekDates() {

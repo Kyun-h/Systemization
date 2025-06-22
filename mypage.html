@@ -165,6 +165,8 @@
 
         const email = user.email;
 
+        let docId = null;
+
         const snapshot = await db.collection('reservations')
           .where('email', '==', email)
           .orderBy('createdAt', 'desc')
@@ -173,6 +175,7 @@
 
         if (!snapshot.empty) {
           const data = snapshot.docs[0].data();
+          docId = snapshot.docs[0].id; // 🔥 문서 ID 저장
           
           reservationInfo.innerHTML = `
             <p><strong>메뉴:</strong> ${data.menu}</p>

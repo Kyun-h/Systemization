@@ -279,7 +279,11 @@ async function loadWeekSummary() {
   });
 
   // 4. 매출 계산 (예시: 메뉴별 가격 지정)
-  const menuPrices = { "제육볶음": 6000, "기타": 5000 }; // 필요시 확장
+  const menuPrices = { "제육볶음": 5000, 
+    "김치찌개": 4500,
+    "돈까스" : 5500,
+    "육회비빔밥" : 5500,
+    "돼지국밥" : 5500 }; // 필요시 확장
   let totalSales = 0;
   const salesByMenu = {};
   for (const [menu, count] of Object.entries(menuCounts)) {

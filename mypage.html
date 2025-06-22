@@ -192,12 +192,16 @@
           cancelBtn.style.display = 'inline-block';
 
           cancelBtn.onclick = async () => {
-            if (confirm('예약을 취소하시겠습니까?')) {
-              await db.collection('reservations').doc(snapshot.docs[0].id).delete();
-              alert('예약이 취소되었습니다.');
-              location.reload();
-            }
-          };
+          if (confirm('예약을 취소하시겠습니까?')) {
+            await db.collection('reservations').doc(snapshot.docs[0].id).delete();
+            alert('예약이 취소되었습니다.');
+
+            // 👉 DOM 직접 초기화
+            reservationInfo.innerHTML = `<p>예약 내역이 없습니다.</p>`;
+            qrCodeView.innerHTML = '';
+            cancelBtn.style.display = 'none';
+          }
+        };
         } else {
           reservationInfo.innerHTML = `<p>예약 내역이 없습니다.</p>`;
           qrCodeView.innerHTML = '';

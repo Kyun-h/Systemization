@@ -3,6 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
   <title>QR 인식 | 학교 식당 예약 시스템</title>
   <style>
     :root { --bg:#f9f9f9; --card-bg:#fff; --text:#333; --accent:#4CAF50; --border:#ccc; }
@@ -31,6 +35,19 @@
   <!-- html5-qrcode 라이브러리 -->
   <script src="https://unpkg.com/html5-qrcode"></script>
   <script>
+    // Firebase 초기화 (본인 프로젝트 값으로)
+const firebaseConfig = {
+  apiKey: "AIzaSyCRC4GkhNoz4MH3Mbxb5a38puGNu2Fox4E",
+  authDomain: "systemization-dc342.firebaseapp.com",
+  projectId: "systemization-dc342",
+  storageBucket: "systemization-dc342.firebasestorage.app",
+  messagingSenderId: "8105541836",
+  appId: "1:8105541836:web:230c5c7867f3bcb62cc269"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+
     const resultDiv = document.getElementById('result');
     const readerDiv = document.getElementById('reader');
 
@@ -51,6 +68,34 @@
       'reader', { fps: 10, qrbox: 250 }
     );
     html5QrcodeScanner.render(onScanSuccess);
+
+    function onScanSuccess(decodedText, decodedResult) {
+  // QR코드 정보 파싱 (예: 예약ID가 그대로 저장된 경우)
+  const reservationId = decodedText; // 혹은 JSON 파싱, split 등 필요
+
+  // Firestore 업데이트
+  db.collection("reservations").doc(reservationId).update({
+    used: true,
+    usedAt: firebase.firestore.FieldValue.serverTimestamp()
+  })
+  .then(() => {
+    console.log("예약 사용완료로 변경됨");
+    // UI 처리 계속
+    html5QrcodeScanner.clear().then(_ => {
+      readerDiv.style.display = 'none';
+      resultDiv.style.display = 'block';
+      setTimeout(() => {
+        resultDiv.style.display = 'none';
+        readerDiv.style.display = 'block';
+        html5QrcodeScanner.render(onScanSuccess);
+      }, 2000);
+    });
+  })
+  .catch(error => {
+    alert("파이어베이스 업데이트 실패: " + error.message);
+  });
+}
+
   </script>
 </body>
 </html>

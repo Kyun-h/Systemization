@@ -340,6 +340,46 @@ function copyAIPrompt() {
     .catch(() => alert('복사에 실패했습니다.'));
 }
 
+
+// 예약 시간대별 종료시각(문자열 → 종료 시:분)
+const timeSlotEnd = {
+  "11:00~11:30": "11:30",
+  "11:30~12:00": "12:00",
+  "12:00~12:30": "12:30",
+  "12:30~13:00": "13:00",
+  "13:00~13:30": "13:30"
+};
+
+async function markNoShow() {
+  const today = new Date().toISOString().split('T')[0];
+  const now = new Date();
+
+  const snapshot = await db.collection("reservations")
+    .where("date", "==", today)
+    .get();
+
+  let count = 0;
+  for (const doc of snapshot.docs) {
+    const data = doc.data();
+    if (data.used) continue; // 이미 사용한 예약은 패스
+    if (data.noShow) continue; // 이미 노쇼 처리된 것도 패스
+
+    const endTimeStr = timeSlotEnd[data.timeSlot];
+    if (!endTimeStr) continue;
+
+    // 종료시각 객체 생성(예: today + "T12:00:00+09:00")
+    const endDateTime = new Date(`${today}T${endTimeStr}:00+09:00`);
+    // 30분 유예 후 시각
+    const limitDateTime = new Date(endDateTime.getTime() + 30 * 60000);
+
+    if (now > limitDateTime) {
+      await db.collection("reservations").doc(doc.id).update({ noShow: true });
+      count++;
+    }
+  }
+  alert(`노쇼 처리 완료: ${count}건`);
+}
+
 // 🔄 기존 초기 로딩 부분에 loadTodayReservations 추가!
 document.addEventListener("DOMContentLoaded", () => {
   loadReservations();

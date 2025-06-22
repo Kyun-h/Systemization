@@ -173,25 +173,7 @@
 
         if (!snapshot.empty) {
           const data = snapshot.docs[0].data();
-          const now = new Date();
-          const timeSlotEndMap = {
-            "11:00~11:30": "11:30",
-            "11:30~12:00": "12:00",
-            "12:00~12:30": "12:30",
-            "12:30~13:00": "13:00",
-            "13:00~13:30": "13:30"
-          };
-          const endTime = timeSlotEndMap[data.time];
-          const endDateTime = new Date(`${data.date}T${endTime}:00+09:00`);
-          const expired = now > new Date(endDateTime.getTime() + 1 * 60 * 1000); // 1분 유예
-
-          if (expired) {
-            reservationInfo.innerHTML = `<p>예약 내역이 없습니다.</p>`;
-            qrCodeView.innerHTML = '';
-            cancelBtn.style.display = 'none';
-            return; // 조기 종료
-          }
-
+          
           reservationInfo.innerHTML = `
             <p><strong>메뉴:</strong> ${data.menu}</p>
             <p><strong>예약 시간:</strong> ${data.time}</p>

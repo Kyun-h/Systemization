@@ -220,10 +220,131 @@ async function loadTodayReservations() {
   }
 }
 
+
+// 이번 주 월~일 날짜 리스트 반환 함수
+function getWeekDates() {
+  const today = new Date();
+  const dayOfWeek = today.getDay(); // 0:일, 1:월, ..., 6:토
+  const monday = new Date(today);
+  monday.setDate(today.getDate() - ((dayOfWeek + 6) % 7)); // 이번 주 월요일
+  return Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(monday);
+    d.setDate(monday.getDate() + i);
+    return d.toISOString().split('T')[0];
+  });
+}
+
+// ✅ 이번 주 요약/매출/추가예약 안내
+async function loadWeekSummary() {
+  const summaryDiv = document.getElementById('weekSummaryBox');
+  summaryDiv.textContent = "분석 중...";
+
+  // 🔥 수정: 정확한 이번 주 날짜 범위 (월~일)
+  const weekDates = getWeekDates();
+
+  // Firestore 쿼리 그대로 유지
+  let reservations = [];
+  for (const date of weekDates) {
+    const snap = await db.collection("reservations").where("date", "==", date).get();
+    snap.forEach(doc => reservations.push({ ...doc.data(), id: doc.id, date }));
+  }
+
+  // 3. 일별, 메뉴별 집계
+  const dailyCounts = {}, menuCounts = {};
+  weekDates.forEach(date => dailyCounts[date] = 0);
+  reservations.forEach(r => {
+    dailyCounts[r.date]++;
+    const menu = r.menu || "기타";
+    menuCounts[menu] = (menuCounts[menu] || 0) + 1;
+  });
+
+  // 4. 매출 계산 (예시: 메뉴별 가격 지정)
+  const menuPrices = { "제육볶음": 6000, "기타": 5000 }; // 필요시 확장
+  let totalSales = 0;
+  const salesByMenu = {};
+  for (const [menu, count] of Object.entries(menuCounts)) {
+    const price = menuPrices[menu] || 0;
+    salesByMenu[menu] = count * price;
+    totalSales += salesByMenu[menu];
+  }
+
+  // 5. 최대 예약일, 분석 메시지 생성
+  let maxDay = '';
+  let maxCount = 0;
+  for (const [date, count] of Object.entries(dailyCounts)) {
+    if (count > maxCount) { maxDay = date; maxCount = count; }
+  }
+
+  // 6. 설명문 자동 생성 (if문)
+  let summaryMsg = '';
+  if (reservations.length === 0) {
+    summaryMsg = `이번 주에는 예약이 없습니다. 예약을 유도하는 홍보가 필요합니다.`;
+  } else {
+    summaryMsg += `이번 주 예약: <b>${reservations.length}건</b><br>`;
+    summaryMsg += `가장 예약이 많은 날: <b>${maxDay.replace(/-/g, '.')}</b> (${maxCount}건)<br>`;
+    summaryMsg += `메뉴별 매출:<br>`;
+    for (const [menu, sales] of Object.entries(salesByMenu)) {
+      summaryMsg += `&nbsp;• ${menu}: ${sales.toLocaleString()}원<br>`;
+    }
+    summaryMsg += `<b>총 매출: ${totalSales.toLocaleString()}원</b><br>`;
+
+    // 안내 메시지
+    if (maxCount >= 5) summaryMsg += `<span class="text-danger">특정 요일에 예약이 집중되어 있습니다. 해당 시간대 추가예약을 고려해보세요.</span><br>`;
+    if (Object.values(menuCounts).some(v => v === 0)) summaryMsg += `<span class="text-warning">예약이 없는 메뉴는 재고를 줄이거나, 새로운 메뉴를 시도해보세요.</span><br>`;
+    if (reservations.length <= 3) summaryMsg += `<span class="text-info">전체 예약 수가 적으니 홍보/프로모션을 강화해보세요.</span><br>`;
+  }
+
+  summaryDiv.innerHTML = summaryMsg;
+
+  
+  // ⬇️ AI 프롬프트 생성 및 콘솔 출력
+  const aiPrompt = makeAIPrompt({weekDates, dailyCounts, menuCounts, salesByMenu, reservations, totalSales, maxDay, maxCount});
+  console.log("[AI 프롬프트 예시]\n" + aiPrompt);
+  document.getElementById('aiPromptArea').value = aiPrompt;
+
+}
+
+function makeAIPrompt({weekDates, dailyCounts, menuCounts, salesByMenu, reservations, totalSales, maxDay, maxCount}) {
+  let aiPrompt = `다음은 이번 주 식당 예약 및 매출 데이터입니다.\n`;
+
+  aiPrompt += `기간: ${weekDates[0]} ~ ${weekDates[6]}\n\n`;
+
+  aiPrompt += `일별 예약 건수:\n`;
+  weekDates.forEach(date => {
+    aiPrompt += `- ${date}: ${dailyCounts[date]}건\n`;
+  });
+
+  aiPrompt += `\n메뉴별 예약 및 매출:\n`;
+  Object.entries(menuCounts).forEach(([menu, count]) => {
+    aiPrompt += `- ${menu}: ${count}건 (매출: ${salesByMenu[menu]?.toLocaleString() || 0}원)\n`;
+  });
+
+  aiPrompt += `\n총 예약: ${reservations.length}건\n`;
+  aiPrompt += `총 매출: ${totalSales.toLocaleString()}원\n`;
+
+  if (maxDay && maxCount > 0)
+    aiPrompt += `가장 예약이 많은 날: ${maxDay} (${maxCount}건)\n`;
+
+  // 트렌드 및 안내 (간단 if문)
+  if (maxCount >= 5) aiPrompt += `특정 요일에 예약이 집중되어 있습니다. 초과예약이나 추가 좌석을 검토하세요.\n`;
+  if (reservations.length <= 3) aiPrompt += `예약 수가 적으니 홍보나 프로모션을 고려해보세요.\n`;
+  if (Object.values(menuCounts).some(v => v === 0)) aiPrompt += `예약이 없는 메뉴도 있습니다. 재고 관리에 주의하세요.\n`;
+
+  return aiPrompt;
+}
+
+function copyAIPrompt() {
+  const area = document.getElementById('aiPromptArea');
+  navigator.clipboard.writeText(area.value)
+    .then(() => alert('AI 프롬프트가 복사되었습니다!'))
+    .catch(() => alert('복사에 실패했습니다.'));
+}
+
 // 🔄 기존 초기 로딩 부분에 loadTodayReservations 추가!
 document.addEventListener("DOMContentLoaded", () => {
   loadReservations();
   loadCheckins();
   loadCurrentMenus();
   loadTodayReservations();  // <-- 추가!
+   loadWeekSummary(); // ✅ 추가!
 });

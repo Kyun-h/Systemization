@@ -4,8 +4,8 @@ document.addEventListener('DOMContentLoaded', () => {
   // 메뉴 데이터 (이름 + 이미지 + 가격)
   const menuData = [
     { name: "김치찌개", price: 4500, image: "imgs/kim.jpg" },
-    { name: "제육볶음", price: 5000, image: "imgs/jj.jpeg" },
-    { name: "돈까스", price: 5500, image: "imgs/don.jpeg" },
+    { name: "제육볶음", price: 4500, image: "imgs/jj.jpeg" },
+    { name: "된장찌개", price: 4000, image: "imgs/dw.webp" },
     { name: "육회비빔밥", price: 5500, image: "imgs/yuk.jpeg" },
     { name: "돼지국밥", price: 5500, image: "imgs/pork.jpg" }
   ];
